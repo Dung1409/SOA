@@ -24,7 +24,8 @@ Describe or diagram the high-level Business Process to be automated.
   - Dịch Vụ Thanh Toán (Payment Service): Xử lý các giao dịch thanh toán
   - Dịch Vụ Giao Hàng (Delivery Service): Quản lý phân công shipper và vận chuyển
   - Dịch Vụ Menu (Menu Service): Cung cấp danh sách món ăn có sẵn
-- **Scope**: Quản lý đơn hàng từ đầu đến cuối cho một nhà hàng; không bao gồm quản lý menu phức tạp, tích hợp cổng thanh toán thực, và theo dõi shipper theo thời gian thực
+- **Scope**: Quản lý đơn hàng từ đầu đến cuối cho một nhà hàng: đặt hàng + giao hàng;
+
   **Process Diagram:**
 
 ```mermaid
@@ -46,7 +47,7 @@ flowchart LR
     DS -->|persist ASSIGNED| DDB[(Delivery DB)]
     DS -->|publish delivery.assigned| MQ
     MQ -->|delivery.assigned| TS
-    TS -->|publish order.cancel (khi payment.failed)| MQ
+    TS -->|publish order.cancel when payment.failed| MQ
     MQ -->|order.cancel| OS
     MQ -->|payment.success| OS
     MQ -->|delivery.assigned| OS
@@ -124,30 +125,30 @@ Group process-specific (non-agnostic) actions into a Task Service Candidate.
 
 Map entities/processes to REST URI Resources.
 
-| Entity / Process                   | Resource URI                                                                     |
-| ---------------------------------- | -------------------------------------------------------------------------------- |
-| Tạo đơn hàng                       | POST /task/order                                                                 |
+| Entity / Process                       | Resource URI                                                                     |
+| -------------------------------------- | -------------------------------------------------------------------------------- |
+| Tạo đơn hàng                           | POST /task/order                                                                 |
 | Xem trạng thái đơn hàng theo requestId | GET /order/status/{requestId}                                                    |
-| Xem trạng thái hệ thống            | GET /task/health, /order/health, /payment/health, /delivery/health, /menu/health |
-| Liệt kê menu                       | GET /menu/items                                                                  |
-| Xác thực dịch vụ                   | GET /\*/health                                                                   |
+| Xem trạng thái hệ thống                | GET /task/health, /order/health, /payment/health, /delivery/health, /menu/health |
+| Liệt kê menu                           | GET /menu/items                                                                  |
+| Xác thực dịch vụ                       | GET /\*/health                                                                   |
 
 ### 2.6 Associate Capabilities with Resources and Methods
 
-| Service Candidate | Capability                                           | Resource                       | HTTP Method |
-| ----------------- | ---------------------------------------------------- | ------------------------------ | ----------- |
-| Task Service      | Đặt đơn hàng                                         | /task/order                    | POST        |
-| Task Service      | Kiểm tra sức khỏe                                    | /task/health                   | GET         |
-| Order Service     | Kiểm tra sức khỏe                                    | /order/health                  | GET         |
-| Order Service     | Truy vấn trạng thái đơn hàng theo requestId          | /order/status/{requestId}      | GET         |
-| Order Service     | Tạo đơn hàng (nội bộ, không đồng bộ)                 | —                              | —           |
-| Order Service     | Cập nhật trạng thái đơn hàng (nội bộ, không đồng bộ) | —                              | —           |
-| Payment Service   | Kiểm tra sức khỏe                                    | /payment/health                | GET         |
-| Payment Service   | Xử lý thanh toán (nội bộ, không đồng bộ)             | —                              | —           |
-| Delivery Service  | Kiểm tra sức khỏe                                    | /delivery/health               | GET         |
-| Delivery Service  | Phân công giao hàng (nội bộ, không đồng bộ)          | —                              | —           |
-| Menu Service      | Liệt kê các mục menu                                 | /menu/items                    | GET         |
-| Menu Service      | Kiểm tra sức khỏe                                    | /menu/health                   | GET         |
+| Service Candidate | Capability                                           | Resource                  | HTTP Method |
+| ----------------- | ---------------------------------------------------- | ------------------------- | ----------- |
+| Task Service      | Đặt đơn hàng                                         | /task/order               | POST        |
+| Task Service      | Kiểm tra sức khỏe                                    | /task/health              | GET         |
+| Order Service     | Kiểm tra sức khỏe                                    | /order/health             | GET         |
+| Order Service     | Truy vấn trạng thái đơn hàng theo requestId          | /order/status/{requestId} | GET         |
+| Order Service     | Tạo đơn hàng (nội bộ, không đồng bộ)                 | —                         | —           |
+| Order Service     | Cập nhật trạng thái đơn hàng (nội bộ, không đồng bộ) | —                         | —           |
+| Payment Service   | Kiểm tra sức khỏe                                    | /payment/health           | GET         |
+| Payment Service   | Xử lý thanh toán (nội bộ, không đồng bộ)             | —                         | —           |
+| Delivery Service  | Kiểm tra sức khỏe                                    | /delivery/health          | GET         |
+| Delivery Service  | Phân công giao hàng (nội bộ, không đồng bộ)          | —                         | —           |
+| Menu Service      | Liệt kê các mục menu                                 | /menu/items               | GET         |
+| Menu Service      | Kiểm tra sức khỏe                                    | /menu/health              | GET         |
 
 > Task Service không lưu kết quả vào DB; trạng thái nghiệp vụ được cập nhật tại các service sở hữu dữ liệu tương ứng.
 
@@ -232,17 +233,17 @@ Service Contract specification for each service. Full OpenAPI specs available at
 
 Task Service (Công Cụ Điều Phối Saga):
 
-| Endpoint                       | Method | Media Type       | Response Codes                                           |
-| ------------------------------ | ------ | ---------------- | -------------------------------------------------------- |
-| /task/health                   | GET    | text/plain       | 200 OK                                                   |
-| /task/order                    | POST   | application/json | 202 Accepted, 400 Bad Request, 500 Internal Server Error |
+| Endpoint     | Method | Media Type       | Response Codes                                           |
+| ------------ | ------ | ---------------- | -------------------------------------------------------- |
+| /task/health | GET    | text/plain       | 200 OK                                                   |
+| /task/order  | POST   | application/json | 202 Accepted, 400 Bad Request, 500 Internal Server Error |
 
 Order Service:
 
-| Endpoint      | Method | Media Type | Response Codes |
-| ------------- | ------ | ---------- | -------------- |
-| /order/health | GET    | text/plain | 200 OK         |
-| /order/status/{requestId} | GET | application/json | 200 OK, 404 Not Found |
+| Endpoint                  | Method | Media Type       | Response Codes        |
+| ------------------------- | ------ | ---------------- | --------------------- |
+| /order/health             | GET    | text/plain       | 200 OK                |
+| /order/status/{requestId} | GET    | application/json | 200 OK, 404 Not Found |
 
 Payment Service:
 
