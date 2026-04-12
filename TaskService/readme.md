@@ -16,7 +16,6 @@ Task Service is the saga orchestrator entrypoint for order processing.
 | Language          | Java 17                                      |
 | Framework         | Spring Boot 3.4.2                            |
 | Messaging         | RabbitMQ                                     |
-| Storage           | In-memory status tracker (ConcurrentHashMap) |
 | Service Discovery | Eureka Client                                |
 
 ## API Endpoints
@@ -24,7 +23,7 @@ Task Service is the saga orchestrator entrypoint for order processing.
 | Method | Endpoint     | Description                |
 | ------ | ------------ | -------------------------- |
 | GET    | /task/health | Service health check       |
-| POST   | /task/order  | Submit a new order request |
+
 
 ### POST /task/order
 
@@ -51,15 +50,6 @@ Submits an order request to the saga orchestrator.
   "message": "Order request accepted and queued."
 }
 ```
-
-### Order Status Polling
-
-⚠️ **Note:** Order status polling has been moved to **OrderService**.
-Use `GET /order/status/{requestId}` instead of the previous /task/order/status endpoint.
-
-See [OrderService README](../OrderService/readme.md) for details.
-
-Full API specification: [../docs/api-specs/TaskService.yaml](../docs/api-specs/TaskService.yaml)
 
 ## Running Locally
 
