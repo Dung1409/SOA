@@ -31,18 +31,26 @@ Describe or diagram the high-level Business Process to be automated.
 flowchart LR
     C[Khách Hàng] -->|Đặt Đơn| API[API Gateway]
     API -->|POST /task/order| TS[Task Service]
-    TS -->|order.create| OS[Order Service]
-  OS -->|persist PENDING / COMPLETED / CANCELLED| ODB[(Order DB)]
-    OS -->|order.created event| TS
-    TS -->|payment.request| PS[Payment Service]
-  PS -->|persist payment result| PDB[(Payment DB)]
-    PS -->|payment.success| TS
-    PS -->|payment.failed| TS
-    TS -->|delivery.request| DS[Delivery Service]
-  DS -->|persist assignment| DDB[(Delivery DB)]
-    DS -->|delivery.assigned| TS
-    TS -->|order.cancel| OS
-  TS -->|COMPLETED/CANCELLED| OS
+    TS -->|publish order.create| MQ[RabbitMQ / order.exchange]
+    MQ -->|order.create| OS[Order Service]
+    OS -->|persist PENDING| ODB[(Order DB)]
+    OS -->|publish order.created| MQ
+    MQ -->|order.created| TS
+    TS -->|publish payment.request| MQ
+    MQ -->|payment.request| PS[Payment Service]
+    PS -->|publish payment.success/payment.failed| MQ
+    MQ -->|payment.success| TS
+    MQ -->|payment.failed| TS
+    TS -->|publish delivery.request| MQ
+    MQ -->|delivery.request| DS[Delivery Service]
+    DS -->|persist ASSIGNED| DDB[(Delivery DB)]
+    DS -->|publish delivery.assigned| MQ
+    MQ -->|delivery.assigned| TS
+    TS -->|publish order.cancel (khi payment.failed)| MQ
+    MQ -->|order.cancel| OS
+    MQ -->|payment.success| OS
+    MQ -->|delivery.assigned| OS
+    OS -->|persist PAID / COMPLETED / CANCELLED| ODB
     MS[Menu Service] -.->|GET /items| C
 ```
 
@@ -104,42 +112,42 @@ Identify business entities and group reusable (agnostic) actions into Entity Ser
 
 Group process-specific (non-agnostic) actions into a Task Service Candidate.
 
-| Non-agnostic Action                                                                                     | Task Service Candidate           |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------- |
-| Điều phối quy trình đặt đơn → thanh toán → giao hàng                                                    | Task Service (Saga Orchestrator) |
-| Định tuyến sự kiện order.created sang lệnh payment.request                                              | Công Cụ Điều Phối                |
-| Định tuyến payment.success sang lệnh delivery.request                                                   | Công Cụ Điều Phối                |
-| Định tuyến payment.failed sang lệnh order.cancel                                                        | Công Cụ Điều Phối                |
-| Theo dõi trạng thái saga (ORDER_CREATING, PAYMENT_PROCESSING, DELIVERY_PROCESSING, COMPLETED/CANCELLED) | Công Cụ Điều Phối                |
+| Non-agnostic Action                                                                         | Task Service Candidate           |
+| ------------------------------------------------------------------------------------------- | -------------------------------- |
+| Điều phối quy trình đặt đơn → thanh toán → giao hàng                                        | Task Service (Saga Orchestrator) |
+| Định tuyến sự kiện order.created sang lệnh payment.request                                  | Công Cụ Điều Phối                |
+| Định tuyến payment.success sang lệnh delivery.request                                       | Công Cụ Điều Phối                |
+| Định tuyến payment.failed sang lệnh order.cancel                                            | Công Cụ Điều Phối                |
+| Theo dõi trạng thái saga (ORDER_SUBMITTED, ORDER_CREATED, PAYMENT_SUCCESS, FAILED, SUCCESS) | Công Cụ Điều Phối                |
 
 ### 2.5 Identify Resources
 
 Map entities/processes to REST URI Resources.
 
-| Entity / Process                       | Resource URI                                                                     |
-| -------------------------------------- | -------------------------------------------------------------------------------- |
-| Tạo đơn hàng                           | POST /task/order                                                                 |
-| Xem trạng thái đơn hàng theo requestId | GET /task/status/{requestId}                                                     |
-| Xem trạng thái hệ thống                | GET /task/health, /order/health, /payment/health, /delivery/health, /menu/health |
-| Liệt kê menu                           | GET /menu/items                                                                  |
-| Xác thực dịch vụ                       | GET /\*/health                                                                   |
+| Entity / Process                   | Resource URI                                                                     |
+| ---------------------------------- | -------------------------------------------------------------------------------- |
+| Tạo đơn hàng                       | POST /task/order                                                                 |
+| Xem trạng thái đơn hàng theo requestId | GET /order/status/{requestId}                                                    |
+| Xem trạng thái hệ thống            | GET /task/health, /order/health, /payment/health, /delivery/health, /menu/health |
+| Liệt kê menu                       | GET /menu/items                                                                  |
+| Xác thực dịch vụ                   | GET /\*/health                                                                   |
 
 ### 2.6 Associate Capabilities with Resources and Methods
 
-| Service Candidate | Capability                                           | Resource                 | HTTP Method |
-| ----------------- | ---------------------------------------------------- | ------------------------ | ----------- |
-| Task Service      | Đặt đơn hàng                                         | /task/order              | POST        |
-| Task Service      | Truy vấn trạng thái saga theo requestId              | /task/status/{requestId} | GET         |
-| Task Service      | Kiểm tra sức khỏe                                    | /task/health             | GET         |
-| Order Service     | Kiểm tra sức khỏe                                    | /order/health            | GET         |
-| Order Service     | Tạo đơn hàng (nội bộ, không đồng bộ)                 | —                        | —           |
-| Order Service     | Cập nhật trạng thái đơn hàng (nội bộ, không đồng bộ) | —                        | —           |
-| Payment Service   | Kiểm tra sức khỏe                                    | /payment/health          | GET         |
-| Payment Service   | Xử lý thanh toán (nội bộ, không đồng bộ)             | —                        | —           |
-| Delivery Service  | Kiểm tra sức khỏe                                    | /delivery/health         | GET         |
-| Delivery Service  | Phân công giao hàng (nội bộ, không đồng bộ)          | —                        | —           |
-| Menu Service      | Liệt kê các mục menu                                 | /menu/items              | GET         |
-| Menu Service      | Kiểm tra sức khỏe                                    | /menu/health             | GET         |
+| Service Candidate | Capability                                           | Resource                       | HTTP Method |
+| ----------------- | ---------------------------------------------------- | ------------------------------ | ----------- |
+| Task Service      | Đặt đơn hàng                                         | /task/order                    | POST        |
+| Task Service      | Kiểm tra sức khỏe                                    | /task/health                   | GET         |
+| Order Service     | Kiểm tra sức khỏe                                    | /order/health                  | GET         |
+| Order Service     | Truy vấn trạng thái đơn hàng theo requestId          | /order/status/{requestId}      | GET         |
+| Order Service     | Tạo đơn hàng (nội bộ, không đồng bộ)                 | —                              | —           |
+| Order Service     | Cập nhật trạng thái đơn hàng (nội bộ, không đồng bộ) | —                              | —           |
+| Payment Service   | Kiểm tra sức khỏe                                    | /payment/health                | GET         |
+| Payment Service   | Xử lý thanh toán (nội bộ, không đồng bộ)             | —                              | —           |
+| Delivery Service  | Kiểm tra sức khỏe                                    | /delivery/health               | GET         |
+| Delivery Service  | Phân công giao hàng (nội bộ, không đồng bộ)          | —                              | —           |
+| Menu Service      | Liệt kê các mục menu                                 | /menu/items                    | GET         |
+| Menu Service      | Kiểm tra sức khỏe                                    | /menu/health                   | GET         |
 
 > Task Service không lưu kết quả vào DB; trạng thái nghiệp vụ được cập nhật tại các service sở hữu dữ liệu tương ứng.
 
@@ -174,8 +182,8 @@ sequenceDiagram
 
   Khách->>Gateway: POST /task/order
   Gateway->>Task: POST /task/order
-  Task-->>Gateway: 202 Accepted + requestId + status=ORDER_CREATING
-  Gateway-->>Khách: 202 Accepted + requestId + status=ORDER_CREATING
+  Task-->>Gateway: 202 Accepted + requestId + status=ORDER_SUBMITTED
+  Gateway-->>Khách: 202 Accepted + requestId + status=ORDER_SUBMITTED
 
   Task->>Order: order.create
   Order->>Order: Lưu đơn hàng PENDING
@@ -192,16 +200,19 @@ sequenceDiagram
     Delivery->>Delivery: Phân công shipper và lưu trạng thái
     Delivery-->>RabbitMQ: delivery.assigned
     RabbitMQ-->>Task: delivery.assigned
-    Task->>Order: order.complete
+    RabbitMQ-->>Order: payment.success
+    Order->>Order: Cập nhật trạng thái PAID
+    RabbitMQ-->>Order: delivery.assigned
     Order->>Order: Cập nhật trạng thái COMPLETED
   else Thanh toán thất bại
-    Task->>Order: order.cancel
+    Task->>RabbitMQ: order.cancel
+    RabbitMQ-->>Order: order.cancel
     Order->>Order: Cập nhật trạng thái CANCELLED
   end
 
-  Khách->>Gateway: GET /task/status/{requestId}
-  Gateway->>Task: GET /task/status/{requestId}
-  Task-->>Gateway: COMPLETED / CANCELLED
+  Khách->>Gateway: GET /order/status/{requestId}
+  Gateway->>Order: GET /order/status/{requestId}
+  Order-->>Gateway: orderStatus = PENDING / PAID / COMPLETED / CANCELLED
   Gateway-->>Khách: Trạng thái cuối cùng của đơn hàng
 ```
 
@@ -221,17 +232,17 @@ Service Contract specification for each service. Full OpenAPI specs available at
 
 Task Service (Công Cụ Điều Phối Saga):
 
-| Endpoint                 | Method | Media Type       | Response Codes                                           |
-| ------------------------ | ------ | ---------------- | -------------------------------------------------------- |
-| /task/health             | GET    | text/plain       | 200 OK                                                   |
-| /task/order              | POST   | application/json | 202 Accepted, 400 Bad Request, 500 Internal Server Error |
-| /task/status/{requestId} | GET    | application/json | 200 OK, 404 Not Found                                    |
+| Endpoint                       | Method | Media Type       | Response Codes                                           |
+| ------------------------------ | ------ | ---------------- | -------------------------------------------------------- |
+| /task/health                   | GET    | text/plain       | 200 OK                                                   |
+| /task/order                    | POST   | application/json | 202 Accepted, 400 Bad Request, 500 Internal Server Error |
 
 Order Service:
 
 | Endpoint      | Method | Media Type | Response Codes |
 | ------------- | ------ | ---------- | -------------- |
 | /order/health | GET    | text/plain | 200 OK         |
+| /order/status/{requestId} | GET | application/json | 200 OK, 404 Not Found |
 
 Payment Service:
 
@@ -260,23 +271,35 @@ Task Service (Công Cụ Điều Phối):
 
 ```mermaid
 flowchart TD
-  A["POST /task/order"] --> B{Xác Thực Dữ Liệu?}
-  B -->|Không Hợp Lệ| C["Trả Về 400 Bad Request"]
-  B -->|Hợp Lệ| D["Tạo requestId, đặt trạng thái ORDER_CREATING trong memory"]
-  D --> E["Phát hành order.create tới Order Service"]
-  E --> F["Trả Về 202 Accepted + requestId qua Gateway"]
-  F --> G["Lắng nghe sự kiện saga và cập nhật trạng thái trong memory"]
-  G --> H["GET /task/status/{requestId} trả COMPLETED hoặc CANCELLED"]
+  A["POST /task/order"] --> B{Payload hợp lệ?}
+  B -->|Không| C["400 Bad Request"]
+  B -->|Có| D["Tạo requestId"]
+  D --> E["Khởi tạo sagaStatus = ORDER_SUBMITTED trong memory"]
+  E --> F["Publish order.create"]
+  F --> G["202 Accepted + requestId + status=ORDER_SUBMITTED"]
+
+  H["Consume order.created"] --> I["Cập nhật sagaStatus = ORDER_CREATED"]
+  I --> J["Publish payment.request"]
+
+  K["Consume payment.success"] --> L["Cập nhật sagaStatus = PAYMENT_SUCCESS"]
+  L --> M["Publish delivery.request"]
+
+  N["Consume payment.failed"] --> O["Cập nhật sagaStatus = FAILED"]
+  O --> P["Publish order.cancel"]
+  P --> Q["Order Service cập nhật CANCELLED"]
+
+  R["Consume delivery.assigned"] --> S["Cập nhật sagaStatus = SUCCESS"]
 ```
 
 Order Service:
 
 ```mermaid
 flowchart TD
-  A["Nhận order.create"] --> B["Tạo order, lưu PENDING vào Order DB"]
-  B --> C["Phát hành order.created"]
-  D["Nhận order.cancel"] --> E["Cập nhật trạng thái CANCELLED"]
-  F["Nhận order.complete"] --> G["Cập nhật trạng thái COMPLETED"]
+  A["Nhận order.create"] --> B["Tạo order, lưu PENDING vào DB"]
+  B --> C["Gửi order.created"]
+  D["Nhận payment.success"] --> E["Cập nhật DB: status PAID"]
+  F["Nhận delivery.assigned"] --> G["Cập nhật DB: status COMPLETED"]
+  H["Nhận order.cancel"] --> I["Cập nhật DB: status CANCELLED"]
 ```
 
 Payment Service:
@@ -285,8 +308,8 @@ Payment Service:
 flowchart TD
   A["Nhận payment.request"] --> B["Xử lý thanh toán"]
   B --> C{Thành công?}
-  C -->|Có| D["Lưu kết quả và phát hành payment.success"]
-  C -->|Không| E["Lưu kết quả và phát hành payment.failed"]
+  C -->|Có| D["Lưu DB và gửi payment.success"]
+  C -->|Không| E["Lưu DB và gửi payment.failed"]
 ```
 
 Delivery Service:

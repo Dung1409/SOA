@@ -52,14 +52,4 @@ public class Controller {
                 "message", "Order request accepted. Track result by requestId."));
     }
 
-    @GetMapping("/order/status/{requestId}")
-    public ResponseEntity<?> getOrderStatus(@PathVariable String requestId) {
-        OrderTrackingStatus status = orderSagaTracker.getByRequestId(requestId);
-        if (status == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("message", "RequestId not found", "requestId", requestId));
-        }
-        return ResponseEntity.ok(status);
-    }
-
 }
