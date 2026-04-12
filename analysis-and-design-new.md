@@ -52,7 +52,6 @@ flowchart LR
     MQ -->|payment.success| OS
     MQ -->|delivery.assigned| OS
     OS -->|persist PAID / COMPLETED / CANCELLED| ODB
-    MS[Menu Service] -.->|GET /items| C
 ```
 
 ### 1.2 Existing Automation Systems
@@ -225,11 +224,11 @@ sequenceDiagram
 
 Service Contract specification for each service. Full OpenAPI specs available at:
 
-- docs/api-specs/TaskService.yaml
-- docs/api-specs/OrderService.yaml
-- docs/api-specs/PaymentService.yaml
-- docs/api-specs/DeliveryService.yaml
-- docs/api-specs/MenuService.yaml
+- [Task Service - OpenAPI Spec](docs/api-specs/TaskService.yaml)
+- [Order Service - OpenAPI Spec](docs/api-specs/OrderService.yaml)
+- [Payment Service - OpenAPI Spec](docs/api-specs/PaymentService.yaml)
+- [Delivery Service - OpenAPI Spec](docs/api-specs/DeliveryService.yaml)
+- [Menu Service - OpenAPI Spec](docs/api-specs/MenuService.yaml)
 
 Task Service (Công Cụ Điều Phối Saga):
 
