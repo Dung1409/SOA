@@ -62,9 +62,9 @@ Non-functional requirements serve as input for identifying Utility Service and M
 | Requirement  | Description                                                                                                                                         |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Performance  | Thời gian phản hồi dưới 2 giây cho yêu cầu đặt đơn; xử lý thanh toán dưới 5 giây                                                                    |
-| Security     | Xác thực qua JWT token; mã hóa dữ liệu nhạy cảm; kiểm soát truy cập dựa trên vai trò (RBAC) trong Phase 2                                           |
-| Scalability  | Hỗ trợ mở rộng ngang (horizontal scaling) thông qua Docker/Kubernetes; xử lý tăng 10x lưu lượng truy cập trong giờ cao điểm mà không giảm hiệu năng |
-| Availability | SLA thời gian hoạt động 99.5%; suy giảm dịu dàng khi các dịch vụ gặp sự cố; hủy đơn hàng vẫn khả dụng khi Order Service gặp sự cố                   |
+| Security     | Kiểm tra định dạng dữ liệu                                       |
+| Scalability  | Mỗi service chạy độc lập trong Docker container, có thể scale từng service riêng lẻ mà không ảnh hưởng service khác                                 |
+| Availability | Hệ thống hoạt động 24/7; mỗi service expose GET /health để monitor                                                                                  |
 
 ---
 
