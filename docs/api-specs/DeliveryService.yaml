@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Delivery Service API
+  version: 1.0.0
+  description: API for delivery service health endpoint.
+
+servers:
+  - url: http://localhost:8083
+    description: Local development server
+
+paths:
+  /delivery/health:
+    get:
+      summary: Check service health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK

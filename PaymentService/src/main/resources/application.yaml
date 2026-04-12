@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: payment-service
+  datasource:
+    url: jdbc:mysql://${PAYMENT_DB_HOST:localhost}:${PAYMENT_DB_PORT:3307}/${PAYMENT_DB_NAME:payment_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${PAYMENT_DB_USER:payment_user}
+    password: ${PAYMENT_DB_PASSWORD:payment_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+server:
+  port: ${PAYMENT_SERVICE_PORT:8082}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+    register-with-eureka: true
+    fetch-registry: true

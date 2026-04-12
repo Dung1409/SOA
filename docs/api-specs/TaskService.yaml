@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Task Service API
+  version: 1.0.0
+  description: API for task orchestration entrypoints.
+
+servers:
+  - url: http://localhost:8084
+    description: Local development server
+
+paths:
+  /task/health:
+    get:
+      summary: Check service health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /task/order:
+    post:
+      summary: Publish create-order command
+      tags:
+        - Order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        '202':
+          description: Order command accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderSubmitResponse'
+
+
+components:
+  schemas:
+    OrderRequest:
+      type: object
+      required:
+        - amount
+        - phone
+        - address
+      properties:
+        requestId:
+          type: string
+          description: Optional tracking ID provided by client. Auto-generated if omitted.
+          example: d7616f5e-7eb6-4ee9-92aa-c7d5e89b1d4a
+        amount:
+          type: number
+          format: double
+          example: 120000
+        phone:
+          type: string
+          example: "0987654321"
+        description:
+          type: string
+          example: "Cơm gà và trà đào"
+        address:
+          type: string
+          example: "123 Đường ABC, Hà Nội"
+        menuItemIds:
+          type: array
+          items:
+            type: string
+          example:
+            - M01
+            - M04
+
+    OrderSubmitResponse:
+      type: object
+      required:
+        - requestId
+        - status
+        - message
+      properties:
+        requestId:
+          type: string
+          example: d7616f5e-7eb6-4ee9-92aa-c7d5e89b1d4a
+        status:
+          type: string
+          example: ORDER_SUBMITTED
+        message:
+          type: string
+          example: Order request accepted. Track result by requestId.
+

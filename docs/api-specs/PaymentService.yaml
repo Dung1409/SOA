@@ -1,0 +1,24 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  version: 1.0.0
+  description: API for payment service health endpoint.
+
+servers:
+  - url: http://localhost:8082
+    description: Local development server
+
+paths:
+  /payment/health:
+    get:
+      summary: Check service health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK

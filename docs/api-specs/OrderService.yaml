@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Order Service API
+  version: 1.0.0
+  description: API for order creation and status tracking.
+
+servers:
+  - url: http://localhost:8081
+    description: Local development server
+
+paths:
+  /order/health:
+    get:
+      summary: Check service health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /order/status/{requestId}:
+    get:
+      summary: Get order status by request ID
+      tags:
+        - Order
+      description: Polls the current order status (PENDING, PAID, COMPLETED, or CANCELLED)
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          description: Request ID returned from POST /task/order
+          schema:
+            type: string
+            example: d7616f5e-7eb6-4ee9-92aa-c7d5e89b1d4a
+      responses:
+        '200':
+          description: Order status information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderStatusResponse'
+        '404':
+          description: Request ID not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    OrderStatusResponse:
+      type: object
+      required:
+        - requestId
+        - orderId
+        - status
+        - message
+        - updatedAt
+      properties:
+        requestId:
+          type: string
+          description: Request ID from the order submission
+          example: d7616f5e-7eb6-4ee9-92aa-c7d5e89b1d4a
+        orderId:
+          type: string
+          description: Internal order ID in the database
+          example: f79eb703-fda8-4f73-a0ec-2b1a646c4d2e
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PAID
+            - COMPLETED
+            - CANCELLED
+          example: PAID
+        message:
+          type: string
+          example: "Order status: Paid"
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2026-04-12T10:30:45.123456
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: Request ID not found

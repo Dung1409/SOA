@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: menu-service
+
+server:
+  port: ${MENU_SERVICE_PORT:8085}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+    register-with-eureka: true
+    fetch-registry: true

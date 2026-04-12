@@ -1,0 +1,63 @@
+openapi: 3.0.3
+info:
+  title: Menu Service API
+  version: 1.0.0
+  description: API for menu data.
+
+servers:
+  - url: http://localhost:8085
+    description: Local development server
+
+paths:
+  /menu/health:
+    get:
+      summary: Check service health
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: OK
+
+  /menu/items:
+    get:
+      summary: Get menu items list
+      tags:
+        - Menu
+      responses:
+        '200':
+          description: Menu items returned
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MenuItem'
+
+components:
+  schemas:
+    MenuItem:
+      type: object
+      required:
+        - id
+        - name
+        - price
+        - description
+      properties:
+        id:
+          type: string
+          example: M01
+        name:
+          type: string
+          example: Cơm gà nướng
+        price:
+          type: number
+          format: double
+          example: 45000
+        description:
+          type: string
+          example: Cơm gà nướng sốt mật ong
