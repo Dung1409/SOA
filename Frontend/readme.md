@@ -6,12 +6,13 @@ This is the frontend module of the microservices system. It provides the user in
 
 ## Tech Stack
 
-| Component        | Choice               |
-|------------------|----------------------|
-| Framework        | *(e.g., React, Vue, Angular, Svelte, plain HTML/JS)* |
-| Styling          | *(e.g., CSS, Tailwind, Bootstrap, Material UI)*       |
-| Package Manager  | *(e.g., npm, yarn, pnpm)*                             |
-| Build Tool       | *(e.g., Vite, Webpack, esbuild)*                      |
+| Component       | Choice                              |
+| --------------- | ----------------------------------- |
+| Framework       | Plain HTML, CSS, JavaScript         |
+| Web Server      | Nginx (nginx:alpine)                |
+| Styling         | Custom CSS (embedded in index.html) |
+| Package Manager | N/A                                 |
+| Build Tool      | N/A (served as static files)        |
 
 ## Getting Started
 
@@ -19,10 +20,9 @@ This is the frontend module of the microservices system. It provides the user in
 # From project root
 docker compose up frontend --build
 
-# Or run locally (adapt to your stack)
-cd src/
-# npm install && npm run dev
-# yarn && yarn dev
+# Or run frontend container only
+docker build -t soa-frontend ./Frontend
+docker run --rm -p 3000:80 soa-frontend
 ```
 
 ## Project Structure
@@ -30,25 +30,29 @@ cd src/
 ```
 frontend/
 ├── Dockerfile
+├── index.html     # Main UI page
+├── nginx.conf     # Reverse proxy to Gateway/services
 ├── readme.md
-└── src/           # Your source code goes here
+└── src/           # Reserved for future frontend source split
 ```
 
 ## Environment Variables
 
-| Variable       | Description                | Default                  |
-|----------------|----------------------------|--------------------------|
-| `API_BASE_URL` | URL of the API Gateway     | `http://localhost:8080`  |
+No required environment variables at this time.
+
+API routing is configured in `nginx.conf`:
+
+- `/api/*` is proxied to `gateway:8080`
+- `/api-menu/*` is proxied to `menu-service:8085` (fallback)
 
 ## Build for Production
 
 ```bash
-# Example:
-# npm run build
-# yarn build
+# Build production image
+docker build -t soa-frontend ./Frontend
 ```
 
 ## Notes
 
 - All API calls should go through the **API Gateway** (`gateway`), not directly to individual services.
-- Configure proxy or API base URL to point to the gateway.
+- Frontend currently ships as static files served by Nginx, so API path mapping should be changed in `nginx.conf` when needed.

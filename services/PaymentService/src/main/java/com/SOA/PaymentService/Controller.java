@@ -12,4 +12,9 @@ public class Controller {
         return "OK";
     }
 
+    @PostMapping("/pay/{amount}")
+    public String processPayment(@PathVariable double amount) {
+        // Implementation for processing payment
+        return "Payment processed for amount: " + amount;
+    }
 }

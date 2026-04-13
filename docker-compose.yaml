@@ -1,6 +1,6 @@
 services:
   service-discovery:
-    build: ./ServiceDiscovery
+    build: ./services/ServiceDiscovery
     ports:
       - "${SERVICE_DISCOVERY_PORT:-8761}:8761"
     env_file:
@@ -9,7 +9,7 @@ services:
       - app-network
   
   order-service:
-    build: ./OrderService  # duong dan den thu muc chua Dockerfile cua OrderService
+    build: ./services/OrderService  # duong dan den thu muc chua Dockerfile cua OrderService
     ports:
       - "${ORDER_SERVICE_PORT:-8081}:8081"
     env_file:
@@ -29,7 +29,7 @@ services:
       retries: 3
 
   payment-service:
-    build: ./PaymentService # duong dan den thu muc chua Dockerfile cua PaymentService
+    build: ./services/PaymentService # duong dan den thu muc chua Dockerfile cua PaymentService
     ports:
       - "${PAYMENT_SERVICE_PORT:-8082}:8082"
     env_file:
@@ -48,7 +48,7 @@ services:
       timeout: 10s
       retries: 3
   delivery-service:
-    build: ./DeliveryService # duong dan den thu muc chua Dockerfile cua DeliveryService
+    build: ./services/DeliveryService # duong dan den thu muc chua Dockerfile cua DeliveryService
     ports:
       - "${DELIVERY_SERVICE_PORT:-8083}:8083"
     env_file:
@@ -68,7 +68,7 @@ services:
       retries: 3
 
   menu-service:
-    build: ./MenuService
+    build: ./services/MenuService
     ports:
       - "${MENU_SERVICE_PORT:-8085}:8085"
     env_file:
@@ -86,7 +86,7 @@ services:
       retries: 3
 
   task-service:
-    build: ./TaskService
+    build: ./services/TaskService
     ports:
       - "${TASK_SERVICE_PORT:-8084}:8084"
     env_file:

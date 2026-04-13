@@ -172,48 +172,43 @@ Interaction diagram showing how Service Candidates collaborate to fulfill the bu
 
 ```mermaid
 sequenceDiagram
-  participant Khách as Ứng Dụng Khách
-  participant Gateway as API Gateway
-  participant Task as Task Service
-  participant Order as Order Service
-  participant Payment as Payment Service
-  participant Delivery as Delivery Service
-  participant RabbitMQ as RabbitMQ
+  participant Client
+  participant Gateway
+  participant Task
+  participant Order
+  participant Menu
+  participant Payment
+  participant Delivery
 
-  Khách->>Gateway: POST /task/order
-  Gateway->>Task: POST /task/order
-  Task-->>Gateway: 202 Accepted + requestId + status=ORDER_SUBMITTED
-  Gateway-->>Khách: 202 Accepted + requestId + status=ORDER_SUBMITTED
+  Client->>Gateway: POST /task/order
+  Gateway->>Task: Create request
+  Task-->>Gateway: 202 Accepted (requestId)
+  Gateway-->>Client: 202 Accepted (requestId)
 
-  Task->>Order: order.create
-  Order->>Order: Lưu đơn hàng PENDING
-  Order-->>RabbitMQ: order.created
-  RabbitMQ-->>Task: order.created
+  Task->>Order: validate dữ liệu
+  Order->>Menu: validate menuId
+  Menu-->>Order: OK
 
-  Task->>Payment: payment.request
-  Payment->>Payment: Xử lý thanh toán và lưu kết quả
-  Payment-->>RabbitMQ: payment.success / payment.failed
-  RabbitMQ-->>Task: payment.success / payment.failed
+  Task->>Order: create order
+  Order->>Order: lưu PENDING
+  Order-->>Task: orderId
 
-  alt Thanh toán thành công
-    Task->>Delivery: delivery.request
-    Delivery->>Delivery: Phân công shipper và lưu trạng thái
-    Delivery-->>RabbitMQ: delivery.assigned
-    RabbitMQ-->>Task: delivery.assigned
-    RabbitMQ-->>Order: payment.success
-    Order->>Order: Cập nhật trạng thái PAID
-    RabbitMQ-->>Order: delivery.assigned
-    Order->>Order: Cập nhật trạng thái COMPLETED
-  else Thanh toán thất bại
-    Task->>RabbitMQ: order.cancel
-    RabbitMQ-->>Order: order.cancel
-    Order->>Order: Cập nhật trạng thái CANCELLED
-  end
+  Task->>Payment: payment.request(orderId)
+  Payment->>Payment: xử lý thanh toán
+  Payment-->>Task: payment.success
 
-  Khách->>Gateway: GET /order/status/{requestId}
-  Gateway->>Order: GET /order/status/{requestId}
-  Order-->>Gateway: orderStatus = PENDING / PAID / COMPLETED / CANCELLED
-  Gateway-->>Khách: Trạng thái cuối cùng của đơn hàng
+  Task->>Order: update status = PAID
+
+  Task->>Delivery: delivery.request(orderId)
+  Delivery->>Delivery: phân công shipper
+  Delivery-->>Task: delivery.assigned
+
+  Task->>Order: update status = COMPLETED
+
+  Client->>Gateway: GET /task/{requestId}
+  Gateway->>Task: get status
+  Task-->>Gateway: COMPLETED
+  Gateway-->>Client: response
 ```
 
 ---
