@@ -31,6 +31,15 @@ Default port: 8761
 docker compose up -d --build service-discovery
 ```
 
+## Environment Variables
+
+| Variable                 | Description                          | Default   |
+| ------------------------ | ------------------------------------ | --------- |
+| `SERVICE_DISCOVERY_PORT` | Eureka server HTTP port              | 8761      |
+| `EUREKA_HOST`            | Eureka host used in defaultZone      | localhost |
+| `EUREKA_PORT`            | Eureka port used in defaultZone      | 8761      |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile (docker usage) | prod      |
+
 ## Configuration
 
 Main config file: src/main/resources/application.yaml

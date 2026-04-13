@@ -34,6 +34,15 @@ Full API specification: [../docs/api-specs/MenuService.yaml](../docs/api-specs/M
 docker compose up -d --build menu-service
 ```
 
+## Environment Variables
+
+| Variable                 | Description                          | Default   |
+| ------------------------ | ------------------------------------ | --------- |
+| `MENU_SERVICE_PORT`      | Menu service HTTP port               | 8085      |
+| `EUREKA_HOST`            | Eureka host for service discovery    | localhost |
+| `EUREKA_PORT`            | Eureka port for service discovery    | 8761      |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile (docker usage) | prod      |
+
 ## Testing
 
 ```bash

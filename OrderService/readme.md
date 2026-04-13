@@ -64,6 +64,24 @@ Full API specification: [../docs/api-specs/OrderService.yaml](../docs/api-specs/
 docker compose up -d --build order-service
 ```
 
+## Environment Variables
+
+| Variable                 | Description                          | Default        |
+| ------------------------ | ------------------------------------ | -------------- |
+| `ORDER_SERVICE_PORT`     | Order service HTTP port              | 8081           |
+| `ORDER_DB_HOST`          | Order MySQL host                     | localhost      |
+| `ORDER_DB_PORT`          | Order MySQL port                     | 3306           |
+| `ORDER_DB_NAME`          | Order database name                  | order_db       |
+| `ORDER_DB_USER`          | Order database username              | order_user     |
+| `ORDER_DB_PASSWORD`      | Order database password              | order_password |
+| `RABBITMQ_HOST`          | RabbitMQ host                        | localhost      |
+| `RABBITMQ_PORT`          | RabbitMQ port                        | 5672           |
+| `RABBITMQ_USER`          | RabbitMQ username                    | guest          |
+| `RABBITMQ_PASSWORD`      | RabbitMQ password                    | guest          |
+| `EUREKA_HOST`            | Eureka host for service discovery    | localhost      |
+| `EUREKA_PORT`            | Eureka port for service discovery    | 8761           |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile (docker usage) | prod           |
+
 ## Testing
 
 ```bash

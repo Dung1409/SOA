@@ -37,6 +37,15 @@ The API Gateway is the single entry point for client-facing API traffic. It rout
 docker compose up -d --build gateway
 ```
 
+## Environment Variables
+
+| Variable                 | Description                          | Default   |
+| ------------------------ | ------------------------------------ | --------- |
+| `GATEWAY_PORT`           | Gateway HTTP port                    | 8080      |
+| `EUREKA_HOST`            | Eureka host for service discovery    | localhost |
+| `EUREKA_PORT`            | Eureka port for service discovery    | 8761      |
+| `SPRING_PROFILES_ACTIVE` | Active Spring profile (docker usage) | prod      |
+
 ## Testing
 
 ```bash
