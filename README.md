@@ -1,10 +1,13 @@
 # Restaurant Order Management - SOA Microservices
 
-Hệ thống tự động hóa quy trình đặt đơn cho nhà hàng đơn theo mô hình SOA/Microservices.
+[![Stars](https://img.shields.io/github/stars/hungdn1701/microservices-assignment-starter?style=social)](https://github.com/hungdn1701/microservices-assignment-starter/stargazers)
+[![Forks](https://img.shields.io/github/forks/hungdn1701/microservices-assignment-starter?style=social)](https://github.com/hungdn1701/microservices-assignment-starter/network/members)
 
-- Luồng nghiệp vụ: Đặt đơn -> Thanh toán -> Giao hàng -> Hoàn tất
-- Điều phối giao dịch phân tán bằng Saga Orchestration (Task Service)
-- Giao tiếp bất đồng bộ giữa các service bằng RabbitMQ
+> Hệ thống tự động hóa quy trình đặt món cho nhà hàng theo kiến trúc SOA/Microservices, điều phối giao dịch phân tán bằng Saga Orchestration và giao tiếp bất đồng bộ qua RabbitMQ.
+
+> **New to this repo?** See [`GETTING_STARTED.md`](GETTING_STARTED.md) for setup instructions and workflow guide.
+
+---
 
 ## Team Members
 
@@ -14,43 +17,68 @@ Hệ thống tự động hóa quy trình đặt đơn cho nhà hàng đơn theo
 |      |            |      |              |
 |      |            |      |              |
 
-## Service Overview
+---
 
-| Service           | Responsibility                                     | Port                            |
-| ----------------- | -------------------------------------------------- | ------------------------------- |
-| Frontend          | UI đặt món, gửi yêu cầu đặt đơn                    | 3000                            |
-| Gateway           | API Gateway route vào backend                      | 8080                            |
-| Task Service      | Saga orchestrator, nhận lệnh đặt đơn và phát event | 8084                            |
-| Order Service     | Lưu trữ và cập nhật trạng thái đơn hàng            | 8081                            |
-| Payment Service   | Xử lý thanh toán và phát kết quả                   | 8082                            |
-| Delivery Service  | Gán giao hàng và phát delivery.assigned            | 8083                            |
-| Menu Service      | Cung cấp danh sách món ăn                          | 8085                            |
-| Service Discovery | Eureka server cho service registry                 | 8761                            |
-| RabbitMQ          | Message broker                                     | 5672 (AMQP), 15672 (Management) |
-| MySQL Order       | DB cho Order Service                               | 3310                            |
-| MySQL Payment     | DB cho Payment Service                             | 3307                            |
-| MySQL Delivery    | DB cho Delivery Service                            | 3308                            |
+## Business Process
 
-## High-level Flow
+Hệ thống phục vụ quy trình đặt đơn cho nhà hàng đơn với các tác nhân chính gồm khách hàng, hệ thống đặt món (Frontend/Gateway) và các microservice nghiệp vụ. Luồng chính gồm: tạo đơn hàng -> xử lý thanh toán -> phân công giao hàng -> cập nhật trạng thái hoàn tất hoặc hủy đơn.
 
-1. Client gọi POST /task/order qua Gateway.
-2. Task Service publish order.create.
-3. Order Service tạo đơn (PENDING) và publish order.created.
-4. Task Service publish payment.request.
-5. Payment Service publish payment.success hoặc payment.failed.
-6. Nếu thành công: Task Service publish delivery.request, Delivery Service publish delivery.assigned, Order Service cập nhật COMPLETED.
-7. Nếu thất bại: Task Service publish order.cancel, Order Service cập nhật CANCELLED.
-8. Frontend polling trạng thái đơn qua GET /order/status/{requestId}.
+Phạm vi bài toán tập trung vào tính nhất quán dữ liệu giữa nhiều service thông qua Saga Orchestration tại Task Service, trong đó mỗi bước nghiệp vụ được phát và xử lý qua event RabbitMQ.
 
-## Run with Docker Compose
+---
+
+## Architecture
+
+```mermaid
+graph LR
+	U[User] --> FE[Frontend :3000]
+	FE --> GW[API Gateway :8080]
+	GW --> TS[Task Service :8084]
+	GW --> MS[Menu Service :8085]
+	TS --> RMQ[(RabbitMQ)]
+	RMQ --> OS[Order Service :8081]
+	RMQ --> PS[Payment Service :8082]
+	RMQ --> DS[Delivery Service :8083]
+	OS --> ODB[(MySQL Order :3310)]
+	PS --> PDB[(MySQL Payment :3307)]
+	DS --> DDB[(MySQL Delivery :3308)]
+	GW --> SD[Service Discovery :8761]
+	TS --> SD
+	OS --> SD
+	PS --> SD
+	DS --> SD
+	MS --> SD
+```
+
+| Component             | Responsibility                                              | Tech Stack             | Port        |
+| --------------------- | ----------------------------------------------------------- | ---------------------- | ----------- |
+| **Frontend**          | UI đặt món, gọi API qua Gateway                             | Frontend App + Nginx   | 3000        |
+| **Gateway**           | API Gateway route request tới các backend service           | Spring Cloud Gateway   | 8080        |
+| **Task Service**      | Saga Orchestrator, publish/consume event điều phối đơn hàng | Spring Boot + RabbitMQ | 8084        |
+| **Order Service**     | Tạo đơn, lưu trạng thái đơn hàng                            | Spring Boot + MySQL    | 8081        |
+| **Payment Service**   | Xử lý thanh toán, phát kết quả thành công/thất bại          | Spring Boot + MySQL    | 8082        |
+| **Delivery Service**  | Gán giao hàng, phát sự kiện delivery.assigned               | Spring Boot + MySQL    | 8083        |
+| **Menu Service**      | Cung cấp dữ liệu menu cho frontend                          | Spring Boot            | 8085        |
+| **Service Discovery** | Service registry cho các microservice                       | Eureka Server          | 8761        |
+| **RabbitMQ**          | Message broker cho giao tiếp bất đồng bộ                    | RabbitMQ               | 5672, 15672 |
+
+> Full documentation: [`architecture.md`](architecture.md) · [`analysis-and-design-new.md`](analysis-and-design-new.md) · [`docs/saga-orchestration-single-restaurant.md`](docs/saga-orchestration-single-restaurant.md)
+
+---
+
+## Getting Started
 
 ```bash
-# from repository root
+# Clone and initialize
+git clone <your-repo-url>
+cd <project-folder>
 cp .env.example .env
+
+# Build and run
 docker compose up --build
 ```
 
-## Quick Verification
+### Verify
 
 ```bash
 curl http://localhost:8080
@@ -62,10 +90,14 @@ curl http://localhost:8083/delivery/health
 curl http://localhost:8085/menu/health
 ```
 
-## API Specs
+---
+
+## API Documentation
 
 - [Task Service - OpenAPI Spec](docs/api-specs/TaskService.yaml)
 - [Order Service - OpenAPI Spec](docs/api-specs/OrderService.yaml)
 - [Payment Service - OpenAPI Spec](docs/api-specs/PaymentService.yaml)
 - [Delivery Service - OpenAPI Spec](docs/api-specs/DeliveryService.yaml)
 - [Menu Service - OpenAPI Spec](docs/api-specs/MenuService.yaml)
+
+---

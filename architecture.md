@@ -109,8 +109,6 @@ graph TD
         SD --> MS
 ```
 
-![Architecture Diagram](asset/architecture-diagram.png)
-
 ## 7. Deployment
 
 - Tất cả service được đóng gói bằng Docker.
