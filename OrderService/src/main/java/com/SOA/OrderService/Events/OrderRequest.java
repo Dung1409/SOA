@@ -1,4 +1,4 @@
-package com.SOA.OrderService;
+package com.SOA.OrderService.Events;
 
 import java.util.List;
 

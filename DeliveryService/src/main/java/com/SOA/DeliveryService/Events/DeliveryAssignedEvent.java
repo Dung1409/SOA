@@ -1,4 +1,4 @@
-package com.SOA.DeliveryService;
+package com.SOA.DeliveryService.Events;
 
 public record DeliveryAssignedEvent(String orderId) {
 

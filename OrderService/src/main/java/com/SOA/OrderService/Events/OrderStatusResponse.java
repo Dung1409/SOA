@@ -1,4 +1,6 @@
-package com.SOA.OrderService;
+package com.SOA.OrderService.Events;
+
+import com.SOA.OrderService.OrderStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

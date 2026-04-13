@@ -4,6 +4,9 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
+import com.SOA.DeliveryService.Events.DeliveryAssignedEvent;
+import com.SOA.DeliveryService.Events.DeliveryRequest;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
