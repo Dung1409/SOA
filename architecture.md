@@ -37,7 +37,7 @@ Describe the architectural patterns and styles used:
 | **Menu Service**      | Cung cấp danh sách món ăn cho frontend                                      | Spring Boot (REST API)        | 8085               |
 | **Service Discovery** | Đăng ký và khám phá dịch vụ                                                 | Eureka Server                 | 8761               |
 | **RabbitMQ**          | Message broker cho giao tiếp bất đồng bộ                                    | RabbitMQ                      | 5672 / 15672       |
-| **Database**          | Lưu dữ liệu nghiệp vụ theo từng service (order, payment, delivery)          | MySQL 8.0                     | 3306 / 3307 / 3308 |
+| **Database**          | Lưu dữ liệu nghiệp vụ theo từng service (order, payment, delivery)          | MySQL 8.0                     | 3310 / 3307 / 3308 |
 
 ## 4. Communication Patterns
 
@@ -89,11 +89,13 @@ graph TD
         GW --> TS[Task Service]
         GW --> OS[Order Service]
         GW --> MS[Menu Service]
+        GW --> PS[Payment Service]
+        GW --> DS[Delivery Service]
 
         TS --> RB[(RabbitMQ)]
         OS --> RB
-        PS[Payment Service] --> RB
-        DS[Delivery Service] --> RB
+        PS --> RB
+        DS --> RB
 
         OS --> ODB[(order_db)]
         PS --> PDB[(payment_db)]

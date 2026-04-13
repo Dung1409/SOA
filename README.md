@@ -1,4 +1,4 @@
-# Single Restaurant Order Management - SOA Microservices
+# Restaurant Order Management - SOA Microservices
 
 Hệ thống tự động hóa quy trình đặt đơn cho nhà hàng đơn theo mô hình SOA/Microservices.
 

@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 
-public class Producer {
+public class Consumer {
 
     private final RabbitTemplate rabbitTemplate;
     private final OrderRepository orderRepository;

@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class Producer {
+public class Consumser {
 
     final RabbitTemplate rabbitTemplate;
     final PaymentRepository paymentRepository;
